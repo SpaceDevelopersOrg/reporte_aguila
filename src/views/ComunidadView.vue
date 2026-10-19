@@ -1,21 +1,107 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { Show } from '@clerk/vue'
+import { computed, reactive, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 import AppIcon from '../components/ui/AppIcon.vue'
 import BaseBadge from '../components/ui/BaseBadge.vue'
+import BaseButton from '../components/ui/BaseButton.vue'
+import BaseField from '../components/ui/BaseField.vue'
 import BasePills from '../components/ui/BasePills.vue'
+import BaseSegmented from '../components/ui/BaseSegmented.vue'
 import BaseSkeleton from '../components/ui/BaseSkeleton.vue'
 import EmptyState from '../components/ui/EmptyState.vue'
+import { useOnline } from '../composables/useOnline'
 import { useCommunityStore } from '../stores/community'
 import { useEventsStore } from '../stores/events'
+import { useReportsStore } from '../stores/reports'
+import { useUiStore } from '../stores/ui'
 import { CATEGORY_LABELS, formatDayMonth } from '../utils/format'
 import type { CommunityType } from '../types'
 
 const community = useCommunityStore()
 const events = useEventsStore()
+const reports = useReportsStore()
+const ui = useUiStore()
+const { isOnline } = useOnline()
 
 const tab = ref<CommunityType>('club')
 const pagerRef = ref<HTMLElement | null>(null)
+
+const showProposal = ref(false)
+const submitting = ref(false)
+
+type ProposalKind = 'club' | 'sports' | 'organizer'
+
+const proposal = reactive({
+  kind: 'club' as ProposalKind,
+  name: '',
+  description: '',
+  contact: '',
+})
+
+const proposalErrors = reactive({ name: '', description: '', contact: '' })
+
+const kindOptions = [
+  { value: 'club', label: 'Club/Comunidad' },
+  { value: 'sports', label: 'Deporte' },
+  { value: 'organizer', label: 'Organización' },
+]
+
+const KIND_LABELS: Record<ProposalKind, string> = {
+  club: 'Club o comunidad',
+  sports: 'Comunidad deportiva',
+  organizer: 'Organización',
+}
+
+function validateProposal(): boolean {
+  proposalErrors.name =
+    proposal.name.trim().length < 4 ? 'Escribe un nombre de al menos 4 caracteres.' : ''
+  proposalErrors.description =
+    proposal.description.trim().length < 10
+      ? 'Describe la propuesta con al menos 10 caracteres.'
+      : ''
+  proposalErrors.contact =
+    proposal.contact.trim().length < 5 ? 'Indica un contacto (correo o teléfono).' : ''
+  return !proposalErrors.name && !proposalErrors.description && !proposalErrors.contact
+}
+
+async function submitProposal() {
+  if (!reports.isSignedIn) {
+    ui.push('Inicia sesión para proponer una comunidad u organización.', 'warn')
+    return
+  }
+  if (!validateProposal()) {
+    ui.push('Revisa los campos marcados.', 'error')
+    return
+  }
+  submitting.value = true
+  try {
+    await reports.create(
+      {
+        type: 'comunidad',
+        title: proposal.name.trim(),
+        description: `${KIND_LABELS[proposal.kind]}: ${proposal.description.trim()}`,
+        location: proposal.contact.trim(),
+        anonymous: false,
+      },
+      isOnline.value,
+    )
+    ui.push(
+      isOnline.value
+        ? 'Propuesta enviada correctamente.'
+        : 'Guardada sin conexión. Se enviará al reconectar.',
+      isOnline.value ? 'success' : 'warn',
+    )
+    proposal.name = ''
+    proposal.description = ''
+    proposal.contact = ''
+    proposal.kind = 'club'
+    showProposal.value = false
+  } finally {
+    submitting.value = false
+  }
+}
+
 
 const tabs: { value: CommunityType; label: string }[] = [
   { value: 'club', label: 'Clubes' },
@@ -65,10 +151,100 @@ function upcomingFor(id: string) {
     <header class="community__header">
       <h1>Comunidad FIM</h1>
       <p class="community__lead">
-        Conoce los clubes, equipos deportivos y organizadores que dan vida a la Facultad de
-        Ingeniería Mochis.
+        Descubre clubes y comunidades de la Facultad de Ingeniería Mochis, o propón el tuyo. Las
+        propuestas se envían como reporte y se sincronizan con Turso.
       </p>
+      <Show when="signed-in">
+        <BaseButton variant="subtle" class="community__propose-btn" @click="showProposal = !showProposal">
+          <AppIcon name="plus" :size="16" />
+          {{ showProposal ? 'Cancelar propuesta' : 'Proponer comunidad u organización' }}
+        </BaseButton>
+      </Show>
+      <Show when="signed-out">
+        <p class="community__propose-hint">
+          <RouterLink to="/sign-in">Inicia sesión</RouterLink> para proponer una comunidad u
+          organización.
+        </p>
+      </Show>
     </header>
+
+    <section
+      v-if="showProposal"
+      class="community__proposal"
+      aria-labelledby="proposal-title"
+    >
+      <h2 id="proposal-title">Nueva propuesta</h2>
+      <form novalidate @submit.prevent="submitProposal">
+        <BaseField label="Tipo" required>
+          <template #default="{ id }">
+            <BaseSegmented
+              label="Tipo de propuesta"
+              :options="kindOptions"
+              :model-value="proposal.kind"
+              class="community__kind"
+              @update:model-value="proposal.kind = $event as ProposalKind"
+            />
+            <input :id="id" class="visually-hidden" :value="proposal.kind" tabindex="-1" aria-hidden="true" />
+          </template>
+        </BaseField>
+
+        <BaseField label="Nombre" required :error="proposalErrors.name">
+          <template #default="{ id, describedBy, invalid }">
+            <input
+              :id="id"
+              v-model="proposal.name"
+              class="control"
+              type="text"
+              :aria-describedby="describedBy"
+              :aria-invalid="invalid || undefined"
+              placeholder="Ej. Comunidad de Ajedrez FIM"
+            />
+          </template>
+        </BaseField>
+
+        <BaseField
+          label="Descripción"
+          required
+          :error="proposalErrors.description"
+          hint="Cuenta de qué trata y a quién va dirigida."
+        >
+          <template #default="{ id, describedBy, invalid }">
+            <textarea
+              :id="id"
+              v-model="proposal.description"
+              class="control"
+              :aria-describedby="describedBy"
+              :aria-invalid="invalid || undefined"
+            />
+          </template>
+        </BaseField>
+
+        <BaseField label="Contacto" required :error="proposalErrors.contact" hint="Correo o teléfono.">
+          <template #default="{ id, describedBy, invalid }">
+            <input
+              :id="id"
+              v-model="proposal.contact"
+              class="control"
+              type="text"
+              :aria-describedby="describedBy"
+              :aria-invalid="invalid || undefined"
+              placeholder="contacto@fim.uas.edu.mx"
+            />
+          </template>
+        </BaseField>
+
+        <BaseButton
+          type="submit"
+          variant="accent"
+          block
+          :loading="submitting"
+          class="community__submit"
+        >
+          <AppIcon name="plus" :size="18" />
+          Enviar propuesta
+        </BaseButton>
+      </form>
+    </section>
 
     <BasePills
       label="Sección de la comunidad"
@@ -149,6 +325,34 @@ function upcomingFor(id: string) {
 .community__lead {
   margin: 0;
   max-width: 60ch;
+}
+.community__propose-btn {
+  margin-top: var(--space-3);
+}
+.community__propose-hint {
+  margin: var(--space-3) 0 0;
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+.community__propose-hint a {
+  color: var(--accent);
+  font-weight: 600;
+}
+.community__proposal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  margin-top: var(--space-4);
+}
+.community__proposal h2 {
+  margin: 0 0 var(--space-3);
+}
+.community__kind {
+  width: 100%;
+}
+.community__submit {
+  margin-top: var(--space-4);
 }
 .community__pager {
   display: flex;

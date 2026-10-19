@@ -1,12 +1,13 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import { db, getMeta, setMeta } from '../db'
-import { getEvent, getEvents } from '../services/api/mockApi'
+import { EVENTS_SEED_VERSION, getEvent, getEvents } from '../services/api/eventsApi'
 import { showLocalNotification } from '../services/notifications'
 import { useSettingsStore } from './settings'
 import type { FimEvent } from '../types'
 
 const LAST_SYNC_KEY = 'lastEventSync'
+const SEED_VERSION_KEY = 'eventsSeedVersion'
 
 export const useEventsStore = defineStore('events', () => {
   const items = ref<FimEvent[]>([])
@@ -25,9 +26,17 @@ export const useEventsStore = defineStore('events', () => {
     return sorted.value.filter((e) => Date.parse(e.endsAt) >= now)
   })
 
+  async function syncSeedVersion(): Promise<void> {
+    const stored = await getMeta(SEED_VERSION_KEY)
+    if (stored === EVENTS_SEED_VERSION) return
+    await clearCache()
+    await setMeta(SEED_VERSION_KEY, EVENTS_SEED_VERSION)
+  }
+
   async function loadFromCache() {
     loading.value = true
     try {
+      await syncSeedVersion()
       items.value = await db.events.toArray()
       const sync = await getMeta(LAST_SYNC_KEY)
       lastSync.value = sync ? Date.parse(sync) : null
@@ -40,6 +49,7 @@ export const useEventsStore = defineStore('events', () => {
     refreshing.value = true
     error.value = null
     try {
+      await syncSeedVersion()
       const cached = await db.events.toArray()
       const existingIds = new Set(cached.map((e) => e.id))
       const since = await currentSince()

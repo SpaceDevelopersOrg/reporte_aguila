@@ -41,6 +41,14 @@ const router = createRouter({
       path: '/:pathMatch(.*)*',
       redirect: '/',
     },
+    {
+      path: "/sign-in",
+      component: () => import("../views/sign-in.vue"),
+    },
+    {
+      path: "/sign-up",
+      component: () => import("../views/sign-up.vue"),
+    },
   ],
 })
 

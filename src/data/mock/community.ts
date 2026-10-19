@@ -2,95 +2,30 @@ import type { CommunityOrg } from '../../types'
 
 export const community: CommunityOrg[] = [
   {
-    id: 'club-musica',
-    name: 'Club de Música Águila',
-    type: 'club',
-    description:
-      'Ensayos abiertos de banda, coro y ensamble acústico. Espacio para músicos de todos los semestres.',
-    contact: 'musica.fim@uas.edu.mx',
-    eventIds: ['ev-talentos', 'ev-festival-primavera'],
-  },
-  {
-    id: 'club-teatro',
-    name: 'Taller de Teatro FIM',
-    type: 'club',
-    description:
-      'Montajes escénicos y lectura dramatizada. Bienvenidas todas las carreras de la facultad.',
-    contact: 'teatro.fim@uas.edu.mx',
-    eventIds: ['ev-muestra-teatro'],
-  },
-  {
-    id: 'club-foto',
-    name: 'Círculo de Fotografía',
-    type: 'club',
-    description:
-      'Salidas fotográficas por Mochis y exposición anual de los trabajos de la comunidad.',
-    contact: 'foto.fim@uas.edu.mx',
-    eventIds: ['ev-expo-foto'],
-  },
-  {
-    id: 'club-robotica',
-    name: 'Club de Robótica',
-    type: 'club',
-    description:
-      'Diseño y construcción de robots para competencias regionales. Talleres de electrónica y programación.',
-    contact: 'robotica.fim@uas.edu.mx',
-    eventIds: ['ev-torneo-robotica'],
-  },
-  {
-    id: 'team-futbol',
-    name: 'Águilas Fútbol',
+    id: 'com-basquet',
+    name: 'Comunidad de Basquetbol',
     type: 'sports',
-    description: 'Equipo representativo de fútbol de la FIM. Entrenamientos y torneos interfacultades.',
-    contact: 'futbol.fim@uas.edu.mx',
-    eventIds: ['ev-interfacultades-futbol'],
-  },
-  {
-    id: 'team-basquet',
-    name: 'Águilas Basquetbol',
-    type: 'sports',
-    description: 'Selección de basquetbol varonil y femenil. Temporada de la liga universitaria.',
+    description:
+      'Jugadoras y jugadores de basquetbol de la FIM. Entrenamientos, partidos amistosos y representación de la facultad.',
     contact: 'basquet.fim@uas.edu.mx',
-    eventIds: ['ev-torneo-basquet'],
+    eventIds: ['ev-sesion-basquet'],
   },
   {
-    id: 'team-voleibol',
-    name: 'Águilas Voleibol',
+    id: 'com-voleibol',
+    name: 'Comunidad de Voleibol',
     type: 'sports',
-    description: 'Entrenamientos y partidos amistosos. Convocatoria abierta a nuevos integrantes.',
+    description:
+      'Equipo abierto de voleibol de la facultad. Sesiones recreativas y encuentros amistosos.',
     contact: 'voleibol.fim@uas.edu.mx',
-    eventIds: ['ev-torneo-voleibol'],
+    eventIds: [],
   },
   {
-    id: 'org-cultura',
-    name: 'Coordinación de Cultura FIM',
-    type: 'organizer',
+    id: 'com-literarios',
+    name: 'Comunidad de Ingenieros Literarios',
+    type: 'club',
     description:
-      'Organiza festivales, muestras artísticas y actividades de vinculación cultural para la facultad.',
-    contact: 'cultura@fim.uas.edu.mx',
-    eventIds: ['ev-talentos', 'ev-muestra-teatro', 'ev-expo-foto', 'ev-festival-primavera'],
-  },
-  {
-    id: 'org-deportes',
-    name: 'Coordinación de Deportes FIM',
-    type: 'organizer',
-    description:
-      'Coordina las disciplinas deportivas, torneos internos y la representación de la facultad.',
-    contact: 'deportes@fim.uas.edu.mx',
-    eventIds: [
-      'ev-interfacultades-futbol',
-      'ev-torneo-basquet',
-      'ev-torneo-voleibol',
-      'ev-carrera-aguila',
-    ],
-  },
-  {
-    id: 'org-sociedad',
-    name: 'Sociedad de Alumnos FIM',
-    type: 'organizer',
-    description:
-      'Representa al estudiantado y organiza actividades de integración, bienvenida y servicio.',
-    contact: 'sociedad.alumnos@fim.uas.edu.mx',
-    eventIds: ['ev-bienvenida', 'ev-brigada-servicio', 'ev-cine-club'],
+      'Círculo de lectura y escritura de la FIM, vinculado al Club de Literatura. Comparte textos y participa en los encuentros.',
+    contact: 'literatura.fim@uas.edu.mx',
+    eventIds: ['ev-club-literatura'],
   },
 ]

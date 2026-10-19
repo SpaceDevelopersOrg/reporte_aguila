@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Show, SignInButton, SignUpButton } from '@clerk/vue'
 import { computed, reactive, ref } from 'vue'
 import AppIcon from '../components/ui/AppIcon.vue'
 import BaseBadge from '../components/ui/BaseBadge.vue'
@@ -34,6 +35,7 @@ const typeOptions = [
   { value: 'incidencia', label: 'Incidencia' },
   { value: 'evento', label: 'Propuesta' },
   { value: 'sugerencia', label: 'Sugerencia' },
+  { value: 'comunidad', label: 'Comunidad' },
   { value: 'otro', label: 'Otro' },
 ]
 
@@ -81,6 +83,10 @@ function removePhoto() {
 }
 
 async function submit() {
+  if (!reports.isSignedIn) {
+    ui.push('Inicia sesión para publicar un reporte.', 'warn')
+    return
+  }
   if (!validate()) {
     ui.push('Revisa los campos marcados.', 'error')
     return
@@ -137,8 +143,28 @@ async function remove(id: string) {
 
     <div class="reports__grid">
       <section class="reports__form" aria-labelledby="form-title">
-        <h2 id="form-title">Nuevo reporte</h2>
-        <form novalidate @submit.prevent="submit">
+        <Show when="signed-out">
+          <div class="reports__signin">
+            <h2 id="form-title">Inicia sesión para publicar</h2>
+            <p class="reports__signin-lead">
+              Necesitas una cuenta para enviar reportes a la comunidad FIM. Tus reportes quedarán
+              vinculados a tu usuario.
+            </p>
+            <div class="reports__signin-actions">
+              <SignInButton mode="modal">
+                <button type="button" class="reports__auth-btn">Iniciar sesión</button>
+              </SignInButton>
+              <SignUpButton mode="modal">
+                <button type="button" class="reports__auth-btn reports__auth-btn--accent">
+                  Crear cuenta
+                </button>
+              </SignUpButton>
+            </div>
+          </div>
+        </Show>
+        <Show when="signed-in">
+          <h2 id="form-title">Nuevo reporte</h2>
+          <form novalidate @submit.prevent="submit">
           <BaseField label="Tipo de reporte" required>
             <template #default="{ id }">
               <BaseSegmented
@@ -233,7 +259,8 @@ async function remove(id: string) {
             <AppIcon name="plus" :size="18" />
             Enviar reporte
           </BaseButton>
-        </form>
+          </form>
+        </Show>
       </section>
 
       <section class="reports__list" aria-labelledby="list-title">
@@ -291,13 +318,24 @@ async function remove(id: string) {
           </li>
         </ul>
 
-        <EmptyState
-          v-else
-          title="Aún no tienes reportes"
-          message="Cuando envíes un reporte aparecerá aquí con su estado de envío."
-        >
-          <template #icon>📝</template>
-        </EmptyState>
+        <template v-else>
+          <Show when="signed-out">
+            <EmptyState
+              title="Inicia sesión"
+              message="Entra con tu cuenta para ver y enviar tus reportes."
+            >
+              <template #icon>🔒</template>
+            </EmptyState>
+          </Show>
+          <Show when="signed-in">
+            <EmptyState
+              title="Aún no tienes reportes"
+              message="Cuando envíes un reporte aparecerá aquí con su estado de envío."
+            >
+              <template #icon>📝</template>
+            </EmptyState>
+          </Show>
+        </template>
       </section>
     </div>
   </div>
@@ -336,6 +374,43 @@ async function remove(id: string) {
 }
 .reports__type {
   width: 100%;
+}
+.reports__signin-lead {
+  margin: 0 0 var(--space-4);
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+.reports__signin-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.reports__auth-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: 44px;
+  padding: 0 var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text);
+  font-weight: 600;
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+.reports__auth-btn:hover {
+  background: var(--surface-2);
+  color: var(--text-strong);
+}
+.reports__auth-btn--accent {
+  background: var(--accent);
+  color: var(--text-on-accent);
+  border-color: transparent;
+}
+.reports__auth-btn--accent:hover {
+  background: var(--accent-strong);
 }
 .reports__file {
   padding: var(--space-2);

@@ -18,6 +18,7 @@ export const useReportsStore = defineStore('reports', () => {
   const items = ref<Report[]>([])
   const loading = ref(false)
   const flushing = ref(false)
+  const currentUserId = ref<string | null>(null)
   const lastSummary = ref<{ synced: number; failed: number } | null>(null)
 
   const sorted = computed(() =>
@@ -28,22 +29,39 @@ export const useReportsStore = defineStore('reports', () => {
     () => items.value.filter((r) => r.status !== 'synced').length,
   )
 
+  const isSignedIn = computed(() => !!currentUserId.value)
+
   function countByStatus(status: ReportStatus): number {
     return items.value.filter((r) => r.status === status).length
+  }
+
+  function isOwner(report: Report): boolean {
+    return !!currentUserId.value && report.userId === currentUserId.value
+  }
+
+  async function setUser(userId: string | null) {
+    if (currentUserId.value === userId) return
+    currentUserId.value = userId
+    await load()
   }
 
   async function load() {
     loading.value = true
     try {
-      items.value = await db.reports.toArray()
+      const all = await db.reports.toArray()
+      items.value = currentUserId.value ? all.filter(isOwner) : []
     } finally {
       loading.value = false
     }
   }
 
   async function create(draft: ReportDraft, online: boolean): Promise<Report> {
+    if (!currentUserId.value) {
+      throw new Error('Necesitas iniciar sesión para publicar un reporte.')
+    }
     const report: Report = {
       id: newId(),
+      userId: currentUserId.value,
       type: draft.type,
       title: draft.title.trim(),
       description: draft.description.trim(),
@@ -91,9 +109,12 @@ export const useReportsStore = defineStore('reports', () => {
     loading,
     flushing,
     lastSummary,
+    currentUserId,
+    isSignedIn,
     pendingCount,
     countByStatus,
     load,
+    setUser,
     create,
     retry,
     remove,

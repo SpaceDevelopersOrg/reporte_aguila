@@ -66,6 +66,7 @@ export const REPORT_TYPE_LABELS: Record<ReportType, string> = {
   incidencia: 'Incidencia',
   evento: 'Propuesta de evento',
   sugerencia: 'Sugerencia',
+  comunidad: 'Propuesta de comunidad',
   otro: 'Otro',
 }
 

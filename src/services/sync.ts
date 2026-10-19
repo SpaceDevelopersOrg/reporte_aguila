@@ -1,5 +1,5 @@
 import { db } from '../db'
-import { submitReport } from './api/mockApi'
+import { submitReport } from './api/reportsApi'
 import type { Report } from '../types'
 
 export interface FlushSummary {

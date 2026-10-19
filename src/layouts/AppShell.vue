@@ -1,7 +1,9 @@
 <script setup lang="ts">
+import { useAuth } from '@clerk/vue'
 import { onMounted, ref, watch } from 'vue'
 import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
 import AppIcon from '../components/ui/AppIcon.vue'
+import AuthControls from '../components/AuthControls.vue'
 import ToastHost from '../components/ui/ToastHost.vue'
 import { useOnline } from '../composables/useOnline'
 import { usePreEventAlerts } from '../composables/usePreEventAlerts'
@@ -21,11 +23,20 @@ const notifications = useNotificationsStore()
 const settings = useSettingsStore()
 
 const { isOnline } = useOnline()
+const { userId } = useAuth()
 const route = useRoute()
 const router = useRouter()
 const mainRef = ref<HTMLElement | null>(null)
 
 usePreEventAlerts()
+
+watch(
+  userId,
+  (id) => {
+    void reports.setUser(id ?? null)
+  },
+  { immediate: true },
+)
 
 const navItems = [
   { to: '/', label: 'Inicio', short: 'Inicio', icon: 'home' },
@@ -137,7 +148,6 @@ onMounted(async () => {
   await notifications.refreshPermission()
   await events.loadFromCache()
   void community.load()
-  void reports.load()
   void notifications.loadSubscriptions()
   if (isOnline.value) void events.refresh()
   void registerPeriodicEventCheck()
@@ -161,6 +171,7 @@ onMounted(async () => {
         :aria-label="isOnline ? 'Con conexión' : 'Sin conexión'"
         role="img"
       />
+      <AuthControls />
     </header>
 
     <div class="shell__body">
@@ -199,6 +210,7 @@ onMounted(async () => {
         </nav>
 
         <div class="sidebar__footer">
+          <AuthControls />
           <p class="sidebar__status">
             <AppIcon :name="isOnline ? 'wifi' : 'offline'" :size="16" />
             {{ isOnline ? 'Con conexión' : 'Sin conexión' }}

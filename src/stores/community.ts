@@ -1,8 +1,10 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
-import { db } from '../db'
-import { getCommunity, getOrganizers } from '../services/api/mockApi'
+import { db, getMeta, setMeta } from '../db'
+import { COMMUNITY_SEED_VERSION, getCommunity, getOrganizers } from '../services/api/mockApi'
 import type { CommunityOrg, CommunityType, FimEvent, Organizer } from '../types'
+
+const COMMUNITY_VERSION_KEY = 'communitySeedVersion'
 
 export const useCommunityStore = defineStore('community', () => {
   const orgs = ref<CommunityOrg[]>([])
@@ -18,6 +20,12 @@ export const useCommunityStore = defineStore('community', () => {
   async function load() {
     loading.value = true
     try {
+      const stored = await getMeta(COMMUNITY_VERSION_KEY)
+      if (stored !== COMMUNITY_SEED_VERSION) {
+        await db.community.clear()
+        await db.organizers.clear()
+        await setMeta(COMMUNITY_VERSION_KEY, COMMUNITY_SEED_VERSION)
+      }
       const cached = await db.community.toArray()
       const cachedOrganizers = await db.organizers.toArray()
       if (cached.length && cachedOrganizers.length) {

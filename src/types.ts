@@ -2,7 +2,7 @@ export type EventCategory = 'cultural' | 'sports'
 
 export type CommunityType = 'club' | 'sports' | 'organizer'
 
-export type ReportType = 'incidencia' | 'evento' | 'sugerencia' | 'otro'
+export type ReportType = 'incidencia' | 'evento' | 'sugerencia' | 'comunidad' | 'otro'
 
 export type ReportStatus = 'pending' | 'syncing' | 'synced' | 'failed'
 
@@ -38,6 +38,7 @@ export interface FimEvent {
 
 export interface Report {
   id: string
+  userId: string
   type: ReportType
   title: string
   description: string
