@@ -14,6 +14,7 @@ dev-dist
 *.local
 .env
 .env.*
+*.yaml
 !.env.example
 
 # Editor directories and files
